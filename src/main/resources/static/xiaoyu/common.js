@@ -1,21 +1,28 @@
 var confirmjBox;
 $(document).ready(
 		function() {
-			confirmjBox = new jBox('Confirm', {
-				confirmButton : '确认',
-				cancelButton : '取消'
-			});
-
+			getDevice();
 			var userInfo = jQuery.parseJSON($.session.get('user'));
 			if (checkNull(userInfo)) {
 				$("#loginSpan").css("display", "block");
 			} else {
 				$("#userSpan").css("display", "block");
-				$("#userSpan").find("#nickName").attr("href",
-						"/public/user/" + userInfo.id);
-				$("#userSpan").find("#nickName").text(userInfo.nickName);
+				$("#userSpan").on("mouseover", function() {
+					$(this).find("ul").css("display", "block");
+				});
+				$("#userSpan").on("mouseout", function() {
+					$(this).find("ul").css("display", "none");
+				});
+
+				$("#userSpan").find("#nickname").attr("href",
+						"/user/" + userInfo.userId);
+				$("#userSpan").find("#nickname").text(userInfo.nickname);
 			}
 		});
+
+function setTitle(item) {
+	document.title = item;
+}
 /**
  * 更新信息
  * 
@@ -93,69 +100,7 @@ function postForm(item) {
 		}
 	});
 }
-function publish() {
-	var userInfo = jQuery.parseJSON($.session.get("user"));
-	if (checkNull(userInfo)) {
-		new jBox('Notice', {
-			color : 'red',
-			animation : 'tada',
-			autoClose : 2000,
-			content : '请先登录!'
-		});
-		return false;
-	}
-	var content = $("#articleContent");
-	if (checkNull(content.val())) {
-		new jBox('Notice', {
-			color : 'red',
-			animation : 'tada',
-			autoClose : 2000,
-			content : '请君留字!'
-		});
-		return false;
-	}
-	var userId = userInfo.id;
-	var token = userInfo.token;
-	$.ajax({
-		type : "post",
-		url : "/private/article/add",
-		data : {
-			userId : userId,
-			token : token,
-			content : content.val()
-		},
-		async : true,
-		error : function(data) {
-			new jBox('Notice', {
-				color : 'red',
-				animation : 'tada',
-				content : '发表失败!'
-			});
-			return false;
-		},
-		success : function(data) {
-			var jsonObj = jQuery.parseJSON(data);
-			if (jsonObj.code == '0') {
-				window.location.href = "/public/article/" + jsonObj.data;
-			}
-			if (jsonObj.code = '20001') {
-				$.session.remove('user');
-				new jBox('Notice', {
-					color : 'red',
-					animation : 'tada',
-					content : jsonObj.message
-				});
-			} else {
-				new jBox('Notice', {
-					color : 'red',
-					animation : 'tada',
-					content : jsonObj.message
-				});
-			}
-			return true;
-		}
-	});
-}
+
 /**
  * 根据id查看详情
  * 
@@ -184,7 +129,7 @@ function uploadFile() {
 	myModal = new jBox('Modal', {
 		height : 350,
 		width : 350,
-		animation : 'flip',
+		animation : 'tada',
 		closeButton : 'title',
 		closeOnClick : false,
 		draggable : "title",
@@ -204,105 +149,56 @@ function uploadFile() {
  */
 function gotoLogin(nowUrl) {
 	$.session.set('nowUrl', nowUrl, true);
-	window.location.href = "/common/login.html";
+	window.location.href = "/login";
 }
-/**
- * login
- */
-var num = 0;
-function login(item) {
-	var tip = '姓名和密码都不能为空（*＾-＾*）';
-	if ($("#password").val() == '' || $("#loginName").val() == '') {
-		if (num > 3 && num < 6) {
-			tip = '能不能认真点输,老是不对←_←';
-		} else if (num >= 6 && num < 10) {
-			tip = '我严重怀疑你到底有没有注册';
-		} else if (num >= 10) {
-			tip = '我认为你在玩我,我要保留对你的feel'
-		}
-		$('.tooltip').jBox('Tooltip', {
-			content : tip,
-			attach : $("#xyForm"),
-			closeOnClick : 'body',
-			color : 'red',
-			target : $("#xyForm")
-		}).open();
-		num++;
-		return;
-	}
-	$.ajax({
-		// cache : false,
-		type : "POST",
-		url : item,
-		data : $('#xyForm').serialize(),
-		async : true,
-		error : function(data) {
-			new jBox('Notice', {
-				color : 'red',
-				animation : 'tada',
-				autoClose : 1000,
-				content : '服务器错误'
-			});
-			return false;
-		},
-		success : function(data) {
-			var jsonObj = jQuery.parseJSON(data);
-			console.log(jsonObj);
-
-			if (jsonObj.code == '0') {
-				// record user ip
-				$.ajax({
-					type : 'post',
-					async : true,
-					url : '/private/user/loginRecord',
-					data : {
-						userId : jsonObj.data.id
-					},
-					beforeSend : function(xhr) {
-						var userInfo = $.session.get("user");
-						if (!checkNull(userInfo)) {
-							xhr.setRequestHeader('token', userInfo.token);
-						}
-
-					}// 这里设置header
-				});
-				// console.log( JSON.stringify(jsonObj.data));
-				// save the login info
-				$.session.set('user', JSON.stringify(jsonObj.data), false);
-				// go to the previous page,or go to the home
-				var nowUrl = $.session.get("nowUrl");
-				console.log("跳转地址:" + nowUrl);
-				if (checkNull(nowUrl)) {
-					window.location.href = "/xiaoyu.me.html";
-				} else {
-					$.session.remove("nowUrl");
-					window.location.href = nowUrl;
-				}
-
-				return true;
-			} else {
-				new jBox('Notice', {
-					color : 'red',
-					animation : 'tada',
-					autoClose : 1000,
-					content : jsonObj.message
-				});
-				return false;
-			}
-		}
-	});
-};
 /* logout */
-function logout() {
+var logout = function() {
 	$.session.remove('user');
-	// window.location.href = window.location.href.replace(/#/g,'');
 	$.ajax({
-		type : "POST",
-		url : "/private/user/logout",
+		type : "post",
+		url : "/api/v1/user/logout",
 		success : function() {
 			window.location.href = window.location.href.replace(/#/g, '');
 		}
 	});
+}
+function isEmail(str) {
+	var re = /^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/
+	if (re.test(str))
+		return true;
+	return false;
+
+}
+function checkPwd(str) {
+	if (str.length >= 6)
+		return true;
+	return false;
+}
+function isMobile(str) {
+	var re = /^1\d{10}$/
+	if (re.test(str))
+		return true;
+	return false;
+}
+function getAgent() {
+	var agent = navigator.userAgent.toLowerCase();
+	return agent;
+}
+function getDevice() {
+	var agent = navigator.userAgent.toLowerCase();
+	var osName = function() {
+		if (/windows/.test(agent)) {
+			return 'windows';
+		} else if (/iphone|ipod|ipad|ios/.test(agent)) {
+			return 'ios';
+		} else if (/android/.test(agent)) {
+			return 'android';
+		} else if (/linux/.test(agent)) {
+			return 'linux';
+		}
+	};
+	return osName();
+
 }
 
 // tool function
@@ -345,7 +241,7 @@ function isPC() {
 	return flag;
 }
 function checkNull(item) {
-	if (item == null || item == 'null' || item == undefined || item == '')
+	if (item == null || item == undefined || item == "")
 		return true;
 	return false;
 }

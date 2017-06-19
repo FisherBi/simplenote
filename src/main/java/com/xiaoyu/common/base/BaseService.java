@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -20,7 +19,7 @@ import com.xiaoyu.common.utils.StringUtils;
  * 
  * @author xiaoyu 2016年3月22日
  */
-@Transactional(readOnly = true)
+
 public abstract class BaseService<D extends BaseDao<T>, T extends BaseEntity> {
 
 	@Autowired
@@ -40,6 +39,12 @@ public abstract class BaseService<D extends BaseDao<T>, T extends BaseEntity> {
 		return temp;
 	}
 
+	public T get(String id) {
+		T temp = null;
+		temp = this.tDao.getById(id);
+		return temp;
+	}
+
 	/**
 	 * 删除
 	 * 
@@ -48,7 +53,6 @@ public abstract class BaseService<D extends BaseDao<T>, T extends BaseEntity> {
 	 * @return
 	 * @time 2016年3月22日下午3:14:41
 	 */
-	@Transactional(readOnly = false)
 	public int delete(T t) {
 		return this.tDao.delete(t);
 	}
@@ -99,7 +103,6 @@ public abstract class BaseService<D extends BaseDao<T>, T extends BaseEntity> {
 	 * @return
 	 * @time 2016年3月22日下午3:38:49
 	 */
-	@Transactional(readOnly = false)
 	public int update(T t) {
 		int temp = 0;
 		if (null == t) {
@@ -119,7 +122,6 @@ public abstract class BaseService<D extends BaseDao<T>, T extends BaseEntity> {
 	 * @return
 	 * @time 2016年3月22日下午3:39:25
 	 */
-	@Transactional(readOnly = false)
 	public int save(T t) {
 		int temp = 0;
 		if (null == t) {
@@ -149,6 +151,14 @@ public abstract class BaseService<D extends BaseDao<T>, T extends BaseEntity> {
 			return false;
 		}
 		int count = this.tDao.isExist(t);
+		if (count > 0) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isExist(String id) {
+		int count = this.tDao.isExist(id);
 		if (count > 0) {
 			return true;
 		}

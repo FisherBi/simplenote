@@ -5,15 +5,14 @@ package com.xiaoyu.common.configuration;
 
 import javax.annotation.Resource;
 
-import net.sf.ehcache.CacheManager;
-
 import org.apache.log4j.Logger;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+
+import net.sf.ehcache.CacheManager;
 
 /**
  * 设置ehcache为默认cachemanager
@@ -21,32 +20,35 @@ import org.springframework.core.io.ClassPathResource;
  * @author xiaoyu 2016年3月18日
  */
 @Configuration
-@EnableAutoConfiguration
-@EnableCaching// 启用缓存
+@EnableCaching // 启用缓存
 public class CacheManagerConfiguration {
 
 	private static Logger logger = Logger.getLogger(CacheManagerConfiguration.class);
-	
+
 	@Resource(name = "ecacheManager")
 	private CacheManager cacheManager;
 
-	/**注册cachebean
-	 *@author xiaoyu
-	 *@param factory
-	 *@return
-	 *@time 2016年3月18日下午8:40:12
+	/**
+	 * 注册cachebean
+	 * 
+	 * @author xiaoyu
+	 * @param factory
+	 * @return
+	 * @time 2016年3月18日下午8:40:12
 	 */
 	@Bean(name = "ecacheManager")
 	public CacheManager cacheManager(EhCacheManagerFactoryBean factory) {
 		cacheManager = factory.getObject();
-		logger.info("缓存管理器配置:"+cacheManager.getName());
+		logger.info("缓存管理器配置:" + cacheManager.getName());
 		return cacheManager;
 	}
 
-	/**ecache bean工厂
-	 *@author xiaoyu
-	 *@return
-	 *@time 2016年3月18日下午8:38:22
+	/**
+	 * ecache bean工厂
+	 * 
+	 * @author xiaoyu
+	 * @return
+	 * @time 2016年3月18日下午8:38:22
 	 */
 	@Bean
 	public EhCacheManagerFactoryBean ehCacheManagerFactoryBean() {
